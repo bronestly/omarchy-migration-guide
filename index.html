@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migration Guide: Pop!_OS to Omarchy Linux</title>
+  <meta name="description" content="Step-by-step tutorial to backup Docker, Tailscale, Cloudflare tunnels, AI agents, and migrate cleanly to Omarchy Linux.">
+  <style>
+    :root {
+      --bg: #0f111a;
+      --card-bg: #161824;
+      --card-border: #232738;
+      --accent: #a78bfa;
+      --accent-glow: rgba(167, 139, 250, 0.25);
+      --accent-hover: #c4b5fd;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --blue: #38bdf8;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --code-bg: #090a10;
+      --code-border: #1f2333;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+      line-height: 1.6;
+      padding: 2rem 1rem 6rem;
+    }
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      padding: 3rem 1rem 2rem;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 2.5rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(167, 139, 250, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.8rem;
+      background: linear-gradient(135deg, #fff 0%, #cbd5e1 50%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .callout {
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0;
+      border: 1px solid;
+    }
+    .callout-warning {
+      background: rgba(251, 191, 36, 0.08);
+      border-color: rgba(251, 191, 36, 0.3);
+      color: #fef3c7;
+    }
+    .callout-danger {
+      background: rgba(248, 113, 113, 0.08);
+      border-color: rgba(248, 113, 113, 0.3);
+      color: #fee2e2;
+    }
+    .callout-info {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: #e0f2fe;
+    }
+    .callout h4 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+    }
+    .step-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+    }
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 1rem;
+    }
+    .step-num {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #0f111a;
+      font-weight: 800;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+    .step-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    h3 {
+      font-size: 1.15rem;
+      margin: 1.4rem 0 0.6rem;
+      color: var(--accent-hover);
+    }
+    p, ul, ol {
+      color: #cbd5e1;
+      margin-bottom: 1rem;
+    }
+    ul, ol {
+      padding-left: 1.5rem;
+    }
+    li {
+      margin-bottom: 0.4rem;
+    }
+    .code-block {
+      position: relative;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 10px;
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--code-border);
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+      font-family: "JetBrains Mono", "Fira Code", Monaco, Consolas, monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #e2e8f0;
+    }
+    code {
+      font-family: "JetBrains Mono", "Fira Code", Monaco, Consolas, monospace;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.88em;
+      color: #f1f5f9;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+    }
+    .checklist {
+      list-style: none;
+      padding-left: 0;
+      margin: 1rem 0;
+    }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 0.6rem;
+    }
+    .checklist input[type="checkbox"] {
+      width: 1.15rem;
+      height: 1.15rem;
+      margin-top: 0.2rem;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .spec-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .spec-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .spec-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+      margin-top: 0.25rem;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 4rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="badge">Machine Migration Playbook</div>
+    <h1>Pop!_OS 24.04 &rarr; Omarchy Linux</h1>
+    <p class="subtitle">Complete guide to safely preserve Docker databases, Tailscale mesh, Cloudflare tunnels, AI agent credentials, and install Omarchy with Limine and Btrfs snapshots.</p>
+  </header>
+
+  <!-- Machine Inventory Overview -->
+  <div class="step-card">
+    <h2 style="margin-bottom: 1rem; color: #fff;">Machine Audit & Discovered Services</h2>
+    <div class="specs-grid">
+      <div class="spec-item">
+        <div class="spec-label">Target Drive</div>
+        <div class="spec-value">NVMe 238.5 GB (/dev/nvme0n1)</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Tailscale Node</div>
+        <div class="spec-value">100.120.225.101 (pop-os)</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Active Mac Client</div>
+        <div class="spec-value">mbpr (100.81.195.25)</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Docker Containers</div>
+        <div class="spec-value">20 running services (Postgres, Redis)</div>
+      </div>
+    </div>
+
+    <div class="callout callout-danger">
+      <h4>&#9888; Critical Notice: Single Partition Layout</h4>
+      <p>Your current installation uses <code>/dev/nvme0n1p3</code> for both root (<code>/</code>) and <code>/home</code>. Installing Omarchy requires formatting this drive to <strong>Btrfs</strong>. <strong>All data on the internal drive will be erased</strong>. You must copy your backup archive to your Mac (<code>mbpr</code>) or an external USB drive before booting the installer!</p>
+    </div>
+  </div>
+
+  <!-- STEP 1: AUTOMATED BACKUP -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div class="step-title">Run Automated Pop!_OS Full Backup</div>
+    </div>
+    <p>We created an automated script located at <code>~/backup-popos.sh</code>. It automatically dumps all PostgreSQL databases (SparkyFitness, OneCLI, ReneRouter, OpnForm), inventories git repos, grabs Tailscale and Cloudflare states, and bundles all agent tokens.</p>
+
+    <h3>1. Execute the backup script</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code>cd ~/.t3/scratch/2026-10-08-for-my-linux-machine-here-2b70e37e
+sudo ./backup-popos.sh</code></pre>
+    </div>
+
+    <h3>2. Copy Archive to your Mac (mbpr) over Tailscale</h3>
+    <p>Once the script finishes, transfer the resulting <code>.tar.gz</code> archive and your raw project repositories directly to your Mac:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash (from this machine)</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># Find the generated archive and scp to Mac
+ARCHIVE=$(ls -t ~/omarchy-migration-backup-*.tar.gz | head -1)
+scp "$ARCHIVE" rene@100.81.195.25:~/
+
+# Also sync full project code folders to your Mac as an extra safety measure:
+rsync -avhP ~/Projects ~/sparkyfitness ~/OpnForm ~/model-orchestrator rene@100.81.195.25:~/pop-full-backup/</code></pre>
+    </div>
+
+    <ul class="checklist">
+      <li><input type="checkbox"> Ran <code>./backup-popos.sh</code> and verified database SQL dumps exist</li>
+      <li><input type="checkbox"> Verified archive transferred to Mac (<code>mbpr</code>) or external SSD</li>
+      <li><input type="checkbox"> Confirmed <code>~/Projects</code> and repositories are safely copied off the machine</li>
+    </ul>
+  </div>
+
+  <!-- STEP 2: PREPARE INSTALLATION MEDIA -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div class="step-title">Prepare Omarchy USB & BIOS Settings</div>
+    </div>
+    
+    <h3>1. Download Official Omarchy 4.0.4 ISO</h3>
+    <p>Download the official image (can be done directly on your Mac or current machine):</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span>curl / wget</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code>curl -LO https://iso.omarchy.org/omarchy-4.0.4.iso
+curl -LO https://iso.omarchy.org/omarchy-4.0.4.iso.sha256
+sha256sum -c omarchy-4.0.4.iso.sha256</code></pre>
+    </div>
+
+    <h3>2. Flash to USB Stick</h3>
+    <p>Use <a href="https://etcher.balena.io/" target="_blank" style="color:var(--accent);">balenaEtcher</a> on Mac/Windows, or write it via terminal:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># Replace /dev/sdX with your USB drive identifier
+sudo dd if=omarchy-4.0.4.iso of=/dev/sdX bs=4M status=progress oflag=sync</code></pre>
+    </div>
+
+    <h3>3. Critical BIOS Settings Before Booting</h3>
+    <div class="callout callout-warning">
+      <h4>&#9888; Mandatory Requirements in BIOS:</h4>
+      <ul>
+        <li><strong>Disable Secure Boot:</strong> Omarchy uses the Limine bootloader with custom kernel modules which requires Secure Boot to be turned OFF in BIOS.</li>
+        <li><strong>Disable TPM / Intel PTT:</strong> Must be disabled or set to allow custom bootloader signatures.</li>
+        <li><strong>Use a Wired / 2.4GHz Dongle Keyboard:</strong> Full-disk encryption password prompts at boot do NOT support Bluetooth keyboards. Ensure you have a wired or USB-dongle keyboard.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- STEP 3: INSTALL OMARCHY -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div class="step-title">Install Omarchy Linux</div>
+    </div>
+    <ol>
+      <li>Insert the USB drive, turn on the PC, and press <strong>F12 / Del / F2</strong> to select boot from USB.</li>
+      <li>The Omarchy installer will boot into a sleek TUI wizard.</li>
+      <li>Answer the configuration prompts:
+        <ul>
+          <li><strong>Keyboard layout:</strong> Select your preferred layout.</li>
+          <li><strong>Timezone:</strong> Select your local timezone.</li>
+          <li><strong>Username:</strong> Enter <code>reen</code>.</li>
+          <li><strong>Password:</strong> Enter your user password (this will also be used as the LUKS disk encryption key).</li>
+        </ul>
+      </li>
+      <li><strong>Target Drive:</strong> Select your NVMe drive (<code>/dev/nvme0n1</code>) and choose <strong>Full-disk installation</strong>.</li>
+      <li>The installer will partition Btrfs (<code>@</code> and <code>@home</code>), install packages, and configure Limine. The entire install completes in ~1 to 2 minutes.</li>
+      <li>Reboot and remove the USB drive when prompted.</li>
+    </ol>
+  </div>
+
+  <!-- STEP 4: RESTORE NETWORKING & TAILSCALE -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <div class="step-title">Re-establish Tailscale & Base Services</div>
+    </div>
+    <p>Once you log into Omarchy, open a terminal (press <code>Super + Enter</code> for the Foot/Ghostty terminal):</p>
+
+    <h3>1. Install Core Daemons via Pacman</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code>sudo pacman -Syu --noconfirm docker docker-compose openssh tailscale rsync chezmoi git
+
+# Enable and start services
+sudo systemctl enable --now docker
+sudo systemctl enable --now sshd
+sudo systemctl enable --now tailscaled
+
+# Add user to docker group
+sudo usermod -aG docker $USER</code></pre>
+    </div>
+
+    <h3>2. Reconnect Tailscale</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># Reconnect node and enable Tailscale SSH
+sudo tailscale up --ssh --operator=reen
+
+# Check connection to your Mac
+tailscale ping 100.81.195.25</code></pre>
+    </div>
+
+    <h3>3. Restore Tailscale Dev Publishing Script</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># Transfer backup from Mac
+scp rene@100.81.195.25:~/omarchy-migration-backup-*.tar.gz ~/
+tar -xzvf ~/omarchy-migration-backup-*.tar.gz
+
+# Put dev publish script back in ~/.local/bin/
+mkdir -p ~/.local/bin
+cp omarchy-migration-backup-*/networking/tailscale-dev-publish.py ~/.local/bin/
+chmod +x ~/.local/bin/tailscale-dev-publish.py
+
+# Add to Omarchy autostart
+echo 'o.launch_on_start("python3 /home/reen/.local/bin/tailscale-dev-publish.py")' >> ~/.config/hypr/autostart.lua</code></pre>
+    </div>
+  </div>
+
+  <!-- STEP 5: RESTORE DOCKER & CLOUDFLARE -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">5</div>
+      <div class="step-title">Restore Docker Stacks & Cloudflare Tunnels</div>
+    </div>
+
+    <h3>1. Restore Cloudflare Credentials</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code>sudo pacman -S cloudflared
+cp -r omarchy-migration-backup-*/networking/.cloudflared ~/</code></pre>
+    </div>
+
+    <h3>2. Restore Projects & Databases</h3>
+    <p>Pull your project repos back from your Mac:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code>rsync -avhP rene@100.81.195.25:~/pop-full-backup/ ~/
+
+# Start SparkyFitness & restore database
+cd ~/sparkyfitness
+docker compose up -d
+docker exec -i sparkyfitness-db psql -U postgres < ~/omarchy-migration-backup-*/docker/sparkyfitness-db-dump.sql
+
+# Restore SparkyFitness Tailscale Serve unit
+sudo cp omarchy-migration-backup-*/networking/sparkyfitness-tailscale-serve.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now sparkyfitness-tailscale-serve.service
+
+# Start ReneRouter & OpnForm
+cd ~/Projects/renerouter && docker compose up -d
+docker exec -i renerouter-postgres psql -U postgres < ~/omarchy-migration-backup-*/docker/renerouter-postgres-dump.sql
+
+cd ~/OpnForm && docker compose up -d
+docker exec -i opnform-db psql -U postgres < ~/omarchy-migration-backup-*/docker/opnform-db-dump.sql</code></pre>
+    </div>
+  </div>
+
+  <!-- STEP 6: REMOTE DESKTOP & RECORDINGS -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">6</div>
+      <div class="step-title">Remote Desktop & Zoom Call Recording</div>
+    </div>
+    <p>Because Omarchy runs pure Wayland and Hyprland, the highest performance way to remote desktop in from your Mac/Windows to run browsers and record calls is <strong>Sunshine + Moonlight</strong>:</p>
+
+    <h3>1. Install Sunshine on Omarchy</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code>sudo pacman -S sunshine
+systemctl --user enable --now sunshine</code></pre>
+    </div>
+    <p>Open <code>https://localhost:47990</code> in Chromium to set your PIN, then open <strong>Moonlight</strong> on your Mac/Windows laptop to connect at 60 FPS with stereo loopback audio.</p>
+
+    <h3>2. Recording Zoom Calls & Audio</h3>
+    <ul>
+      <li><strong>Hotkey Recording:</strong> Press <code>Alt + Print Screen</code> to select any browser window and start high-fps recording with audio straight to <code>~/Videos/Recordings/</code>.</li>
+      <li><strong>Headless Recording:</strong> Even if you close your remote desktop session, run this in the background:
+        <div class="code-block">
+          <div class="code-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code>wl-screenrec --audio --filename ~/zoom-meeting-$(date +%F_%H-%M).mp4</code></pre>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- STEP 7: OMARCHY AGENTIC SUPERPOWERS -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">7</div>
+      <div class="step-title">AI Agents & System Snapshots</div>
+    </div>
+
+    <h3>1. Restore Agent Credentials</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code>cp -rp omarchy-migration-backup-*/agents/.claude* ~/
+cp -rp omarchy-migration-backup-*/agents/.codex ~/
+cp -rp omarchy-migration-backup-*/agents/.grok ~/
+cp -rp omarchy-migration-backup-*/agents/.gemini ~/
+cp -rp omarchy-migration-backup-*/agents/.t3 ~/
+cp -rp omarchy-migration-backup-*/keys/.ssh ~/
+chmod 700 ~/.ssh && chmod 600 ~/.ssh/*</code></pre>
+    </div>
+
+    <h3>2. Set Up Multi-Account Quota Failover</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># Enable automatic switching when accounts reach 90% quota limit
+omarchy agent account mode auto 90</code></pre>
+    </div>
+
+    <h3>3. Take Your First Clean Snapshot</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># Create system snapshot via Limine/Btrfs
+omarchy-snapshot create
+
+# Version-control your configs with chezmoi
+chezmoi init
+chezmoi add ~/.bashrc ~/.config/hypr ~/.config/omarchy</code></pre>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Generated for Omarchy Migration &bull; Backups Verified &bull; Built with Cloudflare &amp; Tailscale</p>
+  </div>
+</div>
+
+<script>
+function copyCode(btn) {
+  const code = btn.parentElement.nextElementSibling.querySelector('code').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const originalText = btn.innerText;
+    btn.innerText = 'Copied!';
+    btn.style.color = '#34d399';
+    setTimeout(() => {
+      btn.innerText = originalText;
+      btn.style.color = '';
+    }, 2000);
+  });
+}
+</script>
+
+</body>
+</html>
