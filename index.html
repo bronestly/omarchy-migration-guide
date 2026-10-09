@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Migration Guide: Pop!_OS to Omarchy Linux</title>
-  <meta name="description" content="Step-by-step tutorial to backup Docker, Tailscale, Cloudflare tunnels, AI agents, and migrate cleanly to Omarchy Linux.">
+  <title>Migration Guide: Pop!_OS to Debian 12 Minimal (Btrfs + XFCE)</title>
+  <meta name="description" content="Step-by-step tutorial to migrate Pop!_OS to Debian 12 Bookworm with Btrfs snapshots, Snapper AI-agent rollback, native xrdp remote desktop, and full Docker/PostgreSQL restoration.">
   <style>
     :root {
-      --bg: #0f111a;
-      --card-bg: #161824;
-      --card-border: #232738;
-      --accent: #a78bfa;
-      --accent-glow: rgba(167, 139, 250, 0.25);
-      --accent-hover: #c4b5fd;
-      --green: #34d399;
-      --yellow: #fbbf24;
-      --red: #f87171;
-      --blue: #38bdf8;
-      --text: #e2e8f0;
-      --text-muted: #94a3b8;
-      --code-bg: #090a10;
-      --code-border: #1f2333;
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --card-border: #30363d;
+      --accent: #58a6ff;
+      --accent-glow: rgba(88, 166, 255, 0.25);
+      --accent-hover: #79b8ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --code-bg: #0b0e14;
+      --code-border: #21262d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -31,7 +31,7 @@
       padding: 2rem 1rem 6rem;
     }
     .container {
-      max-width: 920px;
+      max-width: 940px;
       margin: 0 auto;
     }
     header {
@@ -48,10 +48,15 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      background: rgba(167, 139, 250, 0.15);
+      background: rgba(88, 166, 255, 0.15);
       color: var(--accent);
-      border: 1px solid rgba(167, 139, 250, 0.3);
+      border: 1px solid rgba(88, 166, 255, 0.3);
       margin-bottom: 1rem;
+    }
+    .badge-lean {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--green);
+      border-color: rgba(63, 185, 80, 0.3);
     }
     h1 {
       font-size: 2.4rem;
@@ -65,7 +70,7 @@
     .subtitle {
       color: var(--text-muted);
       font-size: 1.1rem;
-      max-width: 700px;
+      max-width: 720px;
       margin: 0 auto;
     }
     .callout {
@@ -75,19 +80,24 @@
       border: 1px solid;
     }
     .callout-warning {
-      background: rgba(251, 191, 36, 0.08);
-      border-color: rgba(251, 191, 36, 0.3);
-      color: #fef3c7;
+      background: rgba(210, 153, 34, 0.1);
+      border-color: rgba(210, 153, 34, 0.35);
+      color: #f0e6d2;
     }
     .callout-danger {
-      background: rgba(248, 113, 113, 0.08);
-      border-color: rgba(248, 113, 113, 0.3);
-      color: #fee2e2;
+      background: rgba(248, 81, 73, 0.1);
+      border-color: rgba(248, 81, 73, 0.35);
+      color: #ffdcd7;
+    }
+    .callout-success {
+      background: rgba(63, 185, 80, 0.1);
+      border-color: rgba(63, 185, 80, 0.35);
+      color: #dcffe4;
     }
     .callout-info {
-      background: rgba(56, 189, 248, 0.08);
-      border-color: rgba(56, 189, 248, 0.3);
-      color: #e0f2fe;
+      background: rgba(88, 166, 255, 0.1);
+      border-color: rgba(88, 166, 255, 0.35);
+      color: #dbeafe;
     }
     .callout h4 {
       display: flex;
@@ -117,7 +127,7 @@
       height: 42px;
       border-radius: 12px;
       background: var(--accent);
-      color: #0f111a;
+      color: #0d1117;
       font-weight: 800;
       font-size: 1.2rem;
       display: flex;
@@ -127,24 +137,24 @@
       box-shadow: 0 0 15px var(--accent-glow);
     }
     .step-title {
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       font-weight: 700;
       color: #fff;
     }
     h3 {
-      font-size: 1.15rem;
+      font-size: 1.12rem;
       margin: 1.4rem 0 0.6rem;
       color: var(--accent-hover);
     }
     p, ul, ol {
-      color: #cbd5e1;
+      color: #c9d1d9;
       margin-bottom: 1rem;
     }
     ul, ol {
       padding-left: 1.5rem;
     }
     li {
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.45rem;
     }
     .code-block {
       position: relative;
@@ -183,9 +193,9 @@
       padding: 1rem;
       overflow-x: auto;
       font-family: "JetBrains Mono", "Fira Code", Monaco, Consolas, monospace;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       line-height: 1.5;
-      color: #e2e8f0;
+      color: #e6edf3;
     }
     code {
       font-family: "JetBrains Mono", "Fira Code", Monaco, Consolas, monospace;
@@ -193,7 +203,7 @@
       padding: 0.2rem 0.4rem;
       border-radius: 4px;
       font-size: 0.88em;
-      color: #f1f5f9;
+      color: #f0f6fc;
     }
     pre code {
       background: none;
@@ -219,8 +229,7 @@
     }
     .specs-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));\n      gap: 1rem;
       margin: 1.5rem 0;
     }
     .spec-item {
@@ -241,6 +250,21 @@
       color: #fff;
       margin-top: 0.25rem;
     }
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+    }
+    .comparison-table th, .comparison-table td {
+      border: 1px solid var(--card-border);
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+    .comparison-table th {
+      background: rgba(255, 255, 255, 0.03);
+      color: #fff;
+    }
     .footer {
       text-align: center;
       margin-top: 4rem;
@@ -260,326 +284,418 @@
 
 <div class="container">
   <header>
-    <div class="badge">Machine Migration Playbook</div>
-    <h1>Pop!_OS 24.04 &rarr; Omarchy Linux</h1>
-    <p class="subtitle">Complete guide to safely preserve Docker databases, Tailscale mesh, Cloudflare tunnels, AI agent credentials, and install Omarchy with Limine and Btrfs snapshots.</p>
+    <div class="badge badge-lean">Lean &amp; Safe Architecture</div>
+    <h1>Pop!_OS 24.04 &rarr; Debian 12 (Btrfs + XFCE)</h1>
+    <p class="subtitle">Minimal resource footprint, rock-solid stability, Btrfs + Snapper snapshots for instant AI-agent rollback, and native Remote Desktop (xrdp).</p>
   </header>
 
-  <!-- Machine Inventory Overview -->
+  <!-- Why Debian 12 + Btrfs for this hardware -->
   <div class="step-card">
-    <h2 style="margin-bottom: 1rem; color: #fff;">Machine Audit & Discovered Services</h2>
+    <h2 style="margin-bottom: 1rem; color: #fff;">Hardware Profile &amp; Architecture Decision</h2>
     <div class="specs-grid">
       <div class="spec-item">
-        <div class="spec-label">Target Drive</div>
-        <div class="spec-value">NVMe 238.5 GB (/dev/nvme0n1)</div>
+        <div class="spec-label">CPU</div>
+        <div class="spec-value">AMD Ryzen R1505G (2C / 4T)</div>
       </div>
       <div class="spec-item">
-        <div class="spec-label">Tailscale Node</div>
-        <div class="spec-value">100.120.225.101 (pop-os)</div>
+        <div class="spec-label">Installed Memory</div>
+        <div class="spec-value">5.7 GB (Shared with Vega GPU)</div>
       </div>
       <div class="spec-item">
-        <div class="spec-label">Active Mac Client</div>
-        <div class="spec-value">mbpr (100.81.195.25)</div>
+        <div class="spec-label">Current Memory Pressure</div>
+        <div class="spec-value" style="color:var(--yellow);">3.8 GB RAM used + 2.6 GB SWAP!</div>
       </div>
       <div class="spec-item">
-        <div class="spec-label">Docker Containers</div>
-        <div class="spec-value">20 running services (Postgres, Redis)</div>
+        <div class="spec-label">Active Workload</div>
+        <div class="spec-value">20 Docker containers + AI agents</div>
       </div>
     </div>
 
-    <div class="callout callout-danger">
-      <h4>&#9888; Critical Notice: Single Partition Layout</h4>
-      <p>Your current installation uses <code>/dev/nvme0n1p3</code> for both root (<code>/</code>) and <code>/home</code>. Installing Omarchy requires formatting this drive to <strong>Btrfs</strong>. <strong>All data on the internal drive will be erased</strong>. You must copy your backup archive to your Mac (<code>mbpr</code>) or an external USB drive before booting the installer!</p>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Metric / Capability</th>
+          <th>Pop!_OS 24.04 (Current)</th>
+          <th>Omarchy Linux (Rejected)</th>
+          <th>Debian 12 + XFCE (Target)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Idle RAM Footprint</strong></td>
+          <td>~1,600 MB (GNOME/COSMIC)</td>
+          <td>~1,100 MB (Hyprland + Wayland)</td>
+          <td style="color:var(--green); font-weight:600;">~350 MB (Saves ~1.25 GB RAM!)</td>
+        </tr>
+        <tr>
+          <td><strong>AI-Agent Mishap Safety</strong></td>
+          <td>Ext4 (No automated snapshots)</td>
+          <td>Rolling Arch (High update churn)</td>
+          <td style="color:var(--green); font-weight:600;">Btrfs + Snapper (Instant rollback)</td>
+        </tr>
+        <tr>
+          <td><strong>Remote Desktop (xrdp)</strong></td>
+          <td>Requires GNOME session tweaks</td>
+          <td>Broken / Needs Moonlight/Sunshine</td>
+          <td style="color:var(--green); font-weight:600;">Native Windows/Mac RDP client (1-click)</td>
+        </tr>
+        <tr>
+          <td><strong>Docker &amp; Postgres Compatibility</strong></td>
+          <td>Ubuntu packages (LTS)</td>
+          <td>Arch AUR / Arch systemd quirks</td>
+          <td style="color:var(--green); font-weight:600;">100% 1:1 identical to current configs</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-success">
+      <h4>&#10004; The Backup Is Already Completed &amp; Pushed to Your Mac</h4>
+      <p>Your 2.3 GB verified backup archive (<code>omarchy-migration-backup-LIGHT.tar.gz</code>) contains all 4 PostgreSQL databases, 26 Docker compose files, Tailscale credentials, Cloudflare keys, SSH keys, and all AI agent token files. It has already been pushed to your Mac (<code>mbpr</code>) via Taildrop.</p>
     </div>
   </div>
 
-  <!-- STEP 1: AUTOMATED BACKUP -->
+  <!-- STEP 1: PRE-FLIGHT VERIFICATION -->
   <div class="step-card">
     <div class="step-header">
       <div class="step-num">1</div>
-      <div class="step-title">Run Automated Pop!_OS Full Backup</div>
+      <div class="step-title">Verify Backup on Your Mac (mbpr)</div>
     </div>
-    <p>We created an automated script located at <code>~/backup-popos.sh</code>. It automatically dumps all PostgreSQL databases (SparkyFitness, OneCLI, ReneRouter, OpnForm), inventories git repos, grabs Tailscale and Cloudflare states, and bundles all agent tokens.</p>
+    <p>Confirm the backup archive arrived safely on your Mac before touching the internal NVMe drive:</p>
 
-    <h3>1. Execute the backup script</h3>
     <div class="code-block">
       <div class="code-header">
-        <span>bash</span>
+        <span>macOS Terminal (on mbpr)</span>
         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       </div>
-      <pre><code>cd ~/.t3/scratch/2026-10-08-for-my-linux-machine-here-2b70e37e
-sudo ./backup-popos.sh</code></pre>
+      <pre><code># Check the file received via Tailscale:
+ls -lh ~/Downloads/omarchy-migration-backup-LIGHT.tar.gz || ls -lh ~/omarchy-migration-backup-LIGHT.tar.gz
+
+# Verify SHA256 matches:
+shasum -a 256 ~/Downloads/omarchy-migration-backup-LIGHT.tar.gz
+# Expected: 14c9113ab32da01b61d659385e18d231dd2ac0a9f3051c3d2d71d5f1457f0501</code></pre>
     </div>
 
-    <h3>2. Copy Archive to your Mac (mbpr) over Tailscale</h3>
-    <p>Once the script finishes, transfer the resulting <code>.tar.gz</code> archive and your raw project repositories directly to your Mac:</p>
+    <h3>Sync Project Git Repositories (Extra Safety)</h3>
     <div class="code-block">
       <div class="code-header">
-        <span>bash (from this machine)</span>
+        <span>bash (from this Pop!_OS machine)</span>
         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       </div>
-      <pre><code># Find the generated archive and scp to Mac
-ARCHIVE=$(ls -t ~/omarchy-migration-backup-*.tar.gz | head -1)
-scp "$ARCHIVE" rene@100.81.195.25:~/
-
-# Also sync full project code folders to your Mac as an extra safety measure:
-rsync -avhP ~/Projects ~/sparkyfitness ~/OpnForm ~/model-orchestrator rene@100.81.195.25:~/pop-full-backup/</code></pre>
+      <pre><code>rsync -avhP --exclude 'node_modules' --exclude '.venv' ~/Projects ~/sparkyfitness ~/OpnForm rene@100.81.195.25:~/pop-full-backup/</code></pre>
     </div>
 
     <ul class="checklist">
-      <li><input type="checkbox"> Ran <code>./backup-popos.sh</code> and verified database SQL dumps exist</li>
-      <li><input type="checkbox"> Verified archive transferred to Mac (<code>mbpr</code>) or external SSD</li>
-      <li><input type="checkbox"> Confirmed <code>~/Projects</code> and repositories are safely copied off the machine</li>
+      <li><input type="checkbox"> Verified <code>omarchy-migration-backup-LIGHT.tar.gz</code> on Mac</li>
+      <li><input type="checkbox"> Verified SHA-256 checksum matches</li>
+      <li><input type="checkbox"> Synced raw Git repositories to Mac</li>
     </ul>
   </div>
 
-  <!-- STEP 2: PREPARE INSTALLATION MEDIA -->
+  <!-- STEP 2: DOWNLOAD & FLASH DEBIAN 12 -->
   <div class="step-card">
     <div class="step-header">
       <div class="step-num">2</div>
-      <div class="step-title">Prepare Omarchy USB & BIOS Settings</div>
+      <div class="step-title">Prepare Debian 12 Netinst USB</div>
     </div>
-    
-    <h3>1. Download Official Omarchy 4.0.4 ISO</h3>
-    <p>Download the official image (can be done directly on your Mac or current machine):</p>
+    <p>Debian 12 (Bookworm) provides a netinst image (~700 MB) with non-free firmware for Realtek, Intel, and AMD chips out of the box.</p>
+
+    <h3>1. Download Official Debian 12 Image</h3>
     <div class="code-block">
       <div class="code-header">
-        <span>curl / wget</span>
+        <span>bash / curl</span>
         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       </div>
-      <pre><code>curl -LO https://iso.omarchy.org/omarchy-4.0.4.iso
-curl -LO https://iso.omarchy.org/omarchy-4.0.4.iso.sha256
-sha256sum -c omarchy-4.0.4.iso.sha256</code></pre>
+      <pre><code># Download latest Bookworm Netinst ISO:
+curl -LO https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.8.0-amd64-netinst.iso
+curl -LO https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/SHA256SUMS
+grep debian-12.8.0-amd64-netinst.iso SHA256SUMS | sha256sum -c</code></pre>
     </div>
 
-    <h3>2. Flash to USB Stick</h3>
-    <p>Use <a href="https://etcher.balena.io/" target="_blank" style="color:var(--accent);">balenaEtcher</a> on Mac/Windows, or write it via terminal:</p>
+    <h3>2. Flash ISO to USB Drive</h3>
+    <p>On macOS or Windows, write using <a href="https://etcher.balena.io/" target="_blank" style="color:var(--accent);">balenaEtcher</a> or <a href="https://rufus.ie/" target="_blank" style="color:var(--accent);">Rufus</a> (DD mode). Or on Linux:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash (Linux)</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># Replace /dev/sdX with your USB drive identifier:
+sudo dd if=debian-12.8.0-amd64-netinst.iso of=/dev/sdX bs=4M status=progress oflag=sync</code></pre>
+    </div>
+  </div>
+
+  <!-- STEP 3: INSTALL DEBIAN WITH BTRFS -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div class="step-title">Install Debian 12 with Btrfs Subvolumes</div>
+    </div>
+    <ol>
+      <li>Plug in the USB drive, power on, and press <strong>F12 / Del / F2</strong> to boot from USB.</li>
+      <li>Choose <strong>Graphical install</strong>.</li>
+      <li>Set language, country, keyboard, and hostname: <code>debian-node</code>.</li>
+      <li>Set root password and create user <code>reen</code>.</li>
+      <li><strong>Partitioning (Critical Step for Snapshots):</strong>
+        <ul>
+          <li>Select <strong>Manual Partitioning</strong> on <code>/dev/nvme0n1</code>.</li>
+          <li>Delete existing partitions.</li>
+          <li>Create EFI partition: <strong>1 GB</strong>, type <code>FAT32 / EFI System Partition</code>, mount as <code>/boot/efi</code>.</li>
+          <li>Create Swap partition: <strong>8 GB</strong>, type <code>swap</code>.</li>
+          <li>Allocate remaining space (~229 GB): type <strong>Btrfs</strong>, mount point <code>/</code>.</li>
+        </ul>
+      </li>
+      <li><strong>Package Selection (Software Selection):</strong>
+        <ul>
+          <li>[&#10004;] <strong>Debian desktop environment</strong></li>
+          <li>[&#10004;] <strong>XFCE</strong> (Uncheck GNOME!)</li>
+          <li>[&#10004;] <strong>SSH server</strong></li>
+          <li>[&#10004;] <strong>Standard system utilities</strong></li>
+        </ul>
+      </li>
+      <li>Install GRUB boot loader to UEFI drive and reboot.</li>
+    </ol>
+  </div>
+
+  <!-- STEP 4: CONFIGURE SNAPPER & INSTANT ROLLBACK -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <div class="step-title">Configure Snapper &amp; GRUB Boot Rollback</div>
+    </div>
+    <p>This is what protects you from any rogue AI agent. Snapper takes automatic pre/post snapshots whenever packages are modified, and lets you roll back the entire OS in one command:</p>
+
+    <h3>1. Install Snapper &amp; grub-btrfs</h3>
     <div class="code-block">
       <div class="code-header">
         <span>bash</span>
         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       </div>
-      <pre><code># Replace /dev/sdX with your USB drive identifier
-sudo dd if=omarchy-4.0.4.iso of=/dev/sdX bs=4M status=progress oflag=sync</code></pre>
+      <pre><code>sudo apt update && sudo apt install -y snapper btrfs-progs inotify-tools git
+
+# Create Snapper config for root filesystem:
+sudo snapper -c root create-config /
+
+# Give user 'reen' permission to view snapshots:
+sudo sed -i 's/ALLOW_USERS=""/ALLOW_USERS="reen"/' /etc/snapper/configs/root
+
+# Enable automated timeline snapshots and cleanup:
+sudo systemctl enable --now snapper-timeline.timer
+sudo systemctl enable --now snapper-cleanup.timer</code></pre>
     </div>
 
-    <h3>3. Critical BIOS Settings Before Booting</h3>
-    <div class="callout callout-warning">
-      <h4>&#9888; Mandatory Requirements in BIOS:</h4>
+    <h3>2. Enable GRUB Btrfs Menu (Boot into Past Snapshots)</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># Install grub-btrfs so snapshots appear directly in the boot menu:
+git clone https://github.com/Antynea/grub-btrfs.git /tmp/grub-btrfs
+cd /tmp/grub-btrfs && sudo make install
+sudo systemctl enable --now grub-btrfsd</code></pre>
+    </div>
+
+    <div class="callout callout-info">
+      <h4>&#8505; How to Undo Agent Breakages in the Future:</h4>
       <ul>
-        <li><strong>Disable Secure Boot:</strong> Omarchy uses the Limine bootloader with custom kernel modules which requires Secure Boot to be turned OFF in BIOS.</li>
-        <li><strong>Disable TPM / Intel PTT:</strong> Must be disabled or set to allow custom bootloader signatures.</li>
-        <li><strong>Use a Wired / 2.4GHz Dongle Keyboard:</strong> Full-disk encryption password prompts at boot do NOT support Bluetooth keyboards. Ensure you have a wired or USB-dongle keyboard.</li>
+        <li><strong>From Terminal:</strong> <code>sudo snapper list</code> &rarr; <code>sudo snapper rollback &lt;number&gt;</code> &rarr; reboot.</li>
+        <li><strong>If System Won't Boot:</strong> Select the snapshot right in the GRUB boot menu to boot into a known good state!</li>
       </ul>
     </div>
   </div>
 
-  <!-- STEP 3: INSTALL OMARCHY -->
-  <div class="step-card">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <div class="step-title">Install Omarchy Linux</div>
-    </div>
-    <ol>
-      <li>Insert the USB drive, turn on the PC, and press <strong>F12 / Del / F2</strong> to select boot from USB.</li>
-      <li>The Omarchy installer will boot into a sleek TUI wizard.</li>
-      <li>Answer the configuration prompts:
-        <ul>
-          <li><strong>Keyboard layout:</strong> Select your preferred layout.</li>
-          <li><strong>Timezone:</strong> Select your local timezone.</li>
-          <li><strong>Username:</strong> Enter <code>reen</code>.</li>
-          <li><strong>Password:</strong> Enter your user password (this will also be used as the LUKS disk encryption key).</li>
-        </ul>
-      </li>
-      <li><strong>Target Drive:</strong> Select your NVMe drive (<code>/dev/nvme0n1</code>) and choose <strong>Full-disk installation</strong>.</li>
-      <li>The installer will partition Btrfs (<code>@</code> and <code>@home</code>), install packages, and configure Limine. The entire install completes in ~1 to 2 minutes.</li>
-      <li>Reboot and remove the USB drive when prompted.</li>
-    </ol>
-  </div>
-
-  <!-- STEP 4: RESTORE NETWORKING & TAILSCALE -->
-  <div class="step-card">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <div class="step-title">Re-establish Tailscale & Base Services</div>
-    </div>
-    <p>Once you log into Omarchy, open a terminal (press <code>Super + Enter</code> for the Foot/Ghostty terminal):</p>
-
-    <h3>1. Install Core Daemons via Pacman</h3>
-    <div class="code-block">
-      <div class="code-header">
-        <span>bash</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      </div>
-      <pre><code>sudo pacman -Syu --noconfirm docker docker-compose openssh tailscale rsync chezmoi git
-
-# Enable and start services
-sudo systemctl enable --now docker
-sudo systemctl enable --now sshd
-sudo systemctl enable --now tailscaled
-
-# Add user to docker group
-sudo usermod -aG docker $USER</code></pre>
-    </div>
-
-    <h3>2. Reconnect Tailscale</h3>
-    <div class="code-block">
-      <div class="code-header">
-        <span>bash</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      </div>
-      <pre><code># Reconnect node and enable Tailscale SSH
-sudo tailscale up --ssh --operator=reen
-
-# Check connection to your Mac
-tailscale ping 100.81.195.25</code></pre>
-    </div>
-
-    <h3>3. Restore Tailscale Dev Publishing Script</h3>
-    <div class="code-block">
-      <div class="code-header">
-        <span>bash</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-      </div>
-      <pre><code># Transfer backup from Mac
-scp rene@100.81.195.25:~/omarchy-migration-backup-*.tar.gz ~/
-tar -xzvf ~/omarchy-migration-backup-*.tar.gz
-
-# Put dev publish script back in ~/.local/bin/
-mkdir -p ~/.local/bin
-cp omarchy-migration-backup-*/networking/tailscale-dev-publish.py ~/.local/bin/
-chmod +x ~/.local/bin/tailscale-dev-publish.py
-
-# Add to Omarchy autostart
-echo 'o.launch_on_start("python3 /home/reen/.local/bin/tailscale-dev-publish.py")' >> ~/.config/hypr/autostart.lua</code></pre>
-    </div>
-  </div>
-
-  <!-- STEP 5: RESTORE DOCKER & CLOUDFLARE -->
+  <!-- STEP 5: TAILSCALE & XRDP REMOTE DESKTOP -->
   <div class="step-card">
     <div class="step-header">
       <div class="step-num">5</div>
-      <div class="step-title">Restore Docker Stacks & Cloudflare Tunnels</div>
+      <div class="step-title">Configure Tailscale &amp; Native Remote Desktop (xrdp)</div>
     </div>
+    <p>Because XFCE is an X11 environment, <strong>xrdp</strong> works natively with full clipboard sharing and display resizing from the official Windows Remote Desktop / Mac Microsoft Remote Desktop client:</p>
 
-    <h3>1. Restore Cloudflare Credentials</h3>
+    <h3>1. Install &amp; Configure xrdp</h3>
     <div class="code-block">
       <div class="code-header">
         <span>bash</span>
         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       </div>
-      <pre><code>sudo pacman -S cloudflared
-cp -r omarchy-migration-backup-*/networking/.cloudflared ~/</code></pre>
+      <pre><code>sudo apt install -y xrdp
+sudo adduser xrdp ssl-cert
+
+# Configure xrdp to launch XFCE:
+echo "startxfce4" > ~/.xsession
+chmod +x ~/.xsession
+
+sudo systemctl enable --now xrdp</code></pre>
     </div>
 
-    <h3>2. Restore Projects & Databases</h3>
-    <p>Pull your project repos back from your Mac:</p>
+    <h3>2. Install &amp; Connect Tailscale</h3>
     <div class="code-block">
       <div class="code-header">
         <span>bash</span>
         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       </div>
-      <pre><code>rsync -avhP rene@100.81.195.25:~/pop-full-backup/ ~/
+      <pre><code>curl -fsSL https://tailscale.com/install.sh | sh
+sudo systemctl enable --now tailscaled
 
-# Start SparkyFitness & restore database
-cd ~/sparkyfitness
-docker compose up -d
-docker exec -i sparkyfitness-db psql -U postgres < ~/omarchy-migration-backup-*/docker/sparkyfitness-db-dump.sql
+# Connect back to your Tailscale network:
+sudo tailscale up --ssh --operator=reen
 
-# Restore SparkyFitness Tailscale Serve unit
-sudo cp omarchy-migration-backup-*/networking/sparkyfitness-tailscale-serve.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now sparkyfitness-tailscale-serve.service
+# Check connection to your Mac:
+tailscale ping 100.81.195.25</code></pre>
+    </div>
 
-# Start ReneRouter & OpnForm
-cd ~/Projects/renerouter && docker compose up -d
-docker exec -i renerouter-postgres psql -U postgres < ~/omarchy-migration-backup-*/docker/renerouter-postgres-dump.sql
-
-cd ~/OpnForm && docker compose up -d
-docker exec -i opnform-db psql -U postgres < ~/omarchy-migration-backup-*/docker/opnform-db-dump.sql</code></pre>
+    <h3>3. Remote Desktop Connection from Mac / Windows</h3>
+    <p>Open <strong>Microsoft Remote Desktop</strong> on your Mac (or Windows Remote Desktop) and connect to your Tailscale IP:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span>RDP Target</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code>100.120.225.101:3389
+User: reen
+Password: &lt;your-debian-password&gt;</code></pre>
     </div>
   </div>
 
-  <!-- STEP 6: REMOTE DESKTOP & RECORDINGS -->
+  <!-- STEP 6: DOCKER & DATABASE RESTORATION -->
   <div class="step-card">
     <div class="step-header">
       <div class="step-num">6</div>
-      <div class="step-title">Remote Desktop & Zoom Call Recording</div>
+      <div class="step-title">Install Docker CE &amp; Restore Databases</div>
     </div>
-    <p>Because Omarchy runs pure Wayland and Hyprland, the highest performance way to remote desktop in from your Mac/Windows to run browsers and record calls is <strong>Sunshine + Moonlight</strong>:</p>
 
-    <h3>1. Install Sunshine on Omarchy</h3>
+    <h3>1. Install Official Docker Engine</h3>
     <div class="code-block">
       <div class="code-header">
         <span>bash</span>
         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       </div>
-      <pre><code>sudo pacman -S sunshine
-systemctl --user enable --now sunshine</code></pre>
-    </div>
-    <p>Open <code>https://localhost:47990</code> in Chromium to set your PIN, then open <strong>Moonlight</strong> on your Mac/Windows laptop to connect at 60 FPS with stereo loopback audio.</p>
+      <pre><code># Add official Docker repository:
+sudo apt update && sudo apt install -y ca-certificates curl gnupg rsync
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-    <h3>2. Recording Zoom Calls & Audio</h3>
-    <ul>
-      <li><strong>Hotkey Recording:</strong> Press <code>Alt + Print Screen</code> to select any browser window and start high-fps recording with audio straight to <code>~/Videos/Recordings/</code>.</li>
-      <li><strong>Headless Recording:</strong> Even if you close your remote desktop session, run this in the background:
-        <div class="code-block">
-          <div class="code-header"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre><code>wl-screenrec --audio --filename ~/zoom-meeting-$(date +%F_%H-%M).mp4</code></pre>
-        </div>
-      </li>
-    </ul>
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Grant user Docker permissions:
+sudo usermod -aG docker $USER
+newgrp docker</code></pre>
+    </div>
+
+    <h3>2. Pull Back the Backup Archive from Mac</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># Copy archive back from Mac:
+scp rene@100.81.195.25:~/Downloads/omarchy-migration-backup-LIGHT.tar.gz ~/
+tar -xzvf ~/omarchy-migration-backup-LIGHT.tar.gz
+
+# Sync project repos back:
+rsync -avhP rene@100.81.195.25:~/pop-full-backup/ ~/</code></pre>
+    </div>
+
+    <h3>3. Restore PostgreSQL Databases</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># 1. SparkyFitness
+cd ~/sparkyfitness && docker compose up -d
+sleep 5
+docker exec -i sparkyfitness-db psql -U sparky -d sparkyfitness_db < ~/omarchy-migration-backup-*/docker/sparkyfitness-db-dump.sql
+
+# Restore SparkyFitness Tailscale Serve Unit
+sudo cp ~/omarchy-migration-backup-*/networking/sparkyfitness-tailscale-serve.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now sparkyfitness-tailscale-serve.service
+
+# 2. CLIProxyAPI / ReneRouter
+cd ~/Projects/renerouter && docker compose up -d
+sleep 5
+docker exec -i renerouter-postgres psql -U cliproxyapi -d cliproxyapi < ~/omarchy-migration-backup-*/docker/renerouter-postgres-dump.sql
+
+# 3. OneCLI
+cd ~/Projects/onecli && docker compose up -d
+sleep 5
+docker exec -i onecli-postgres-1 psql -U onecli -d onecli < ~/omarchy-migration-backup-*/docker/onecli-postgres-1-dump.sql
+
+# 4. OpnForm
+cd ~/OpnForm && docker compose up -d
+sleep 5
+docker exec -i opnform-db psql -U forge -d forge < ~/omarchy-migration-backup-*/docker/opnform-db-dump.sql</code></pre>
+    </div>
   </div>
 
-  <!-- STEP 7: OMARCHY AGENTIC SUPERPOWERS -->
+  <!-- STEP 7: RESTORE AGENT STATE & CLOUDFLARE -->
   <div class="step-card">
     <div class="step-header">
       <div class="step-num">7</div>
-      <div class="step-title">AI Agents & System Snapshots</div>
+      <div class="step-title">Restore AI Agents, Tokens &amp; Cloudflare Tunnels</div>
     </div>
 
-    <h3>1. Restore Agent Credentials</h3>
+    <h3>1. Restore Cloudflare Tunnels</h3>
     <div class="code-block">
       <div class="code-header">
         <span>bash</span>
         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       </div>
-      <pre><code>cp -rp omarchy-migration-backup-*/agents/.claude* ~/
-cp -rp omarchy-migration-backup-*/agents/.codex ~/
-cp -rp omarchy-migration-backup-*/agents/.grok ~/
-cp -rp omarchy-migration-backup-*/agents/.gemini ~/
-cp -rp omarchy-migration-backup-*/agents/.t3 ~/
-cp -rp omarchy-migration-backup-*/keys/.ssh ~/
-chmod 700 ~/.ssh && chmod 600 ~/.ssh/*</code></pre>
+      <pre><code># Install cloudflared:
+curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared.deb
+rm cloudflared.deb
+
+# Restore certs:
+cp -rp ~/omarchy-migration-backup-*/networking/.cloudflared ~/</code></pre>
     </div>
 
-    <h3>2. Set Up Multi-Account Quota Failover</h3>
+    <h3>2. Restore AI Agents &amp; SSH Keys</h3>
     <div class="code-block">
       <div class="code-header">
         <span>bash</span>
         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       </div>
-      <pre><code># Enable automatic switching when accounts reach 90% quota limit
-omarchy agent account mode auto 90</code></pre>
+      <pre><code># Copy SSH keys:
+cp -rp ~/omarchy-migration-backup-*/keys/.ssh ~/
+chmod 700 ~/.ssh && chmod 600 ~/.ssh/*
+
+# Restore AI agent sessions & configs:
+cp -rp ~/omarchy-migration-backup-*/agents/.claude* ~/
+cp -rp ~/omarchy-migration-backup-*/agents/.codex ~/
+cp -rp ~/omarchy-migration-backup-*/agents/.grok ~/
+cp -rp ~/omarchy-migration-backup-*/agents/.gemini ~/
+cp -rp ~/omarchy-migration-backup-*/agents/.t3 ~/
+cp -rp ~/omarchy-migration-backup-*/agents/.cli-proxy-api ~/
+cp -rp ~/omarchy-migration-backup-*/agents/.onecli ~/
+cp -rp ~/omarchy-migration-backup-*/agents/.agents ~/
+
+# Restore Tailscale dev publish script:
+mkdir -p ~/.local/bin
+cp ~/omarchy-migration-backup-*/networking/tailscale-dev-publish.py ~/.local/bin/
+chmod +x ~/.local/bin/tailscale-dev-publish.py</code></pre>
     </div>
 
-    <h3>3. Take Your First Clean Snapshot</h3>
+    <h3>3. Take a Clean Golden-State Snapshot</h3>
     <div class="code-block">
       <div class="code-header">
         <span>bash</span>
         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       </div>
-      <pre><code># Create system snapshot via Limine/Btrfs
-omarchy-snapshot create
-
-# Version-control your configs with chezmoi
-chezmoi init
-chezmoi add ~/.bashrc ~/.config/hypr ~/.config/omarchy</code></pre>
+      <pre><code># Take your initial clean snapshot:
+sudo snapper -c root create -d "Clean setup with Docker, Tailscale, XFCE, and restored databases"</code></pre>
     </div>
   </div>
 
   <div class="footer">
-    <p>Generated for Omarchy Migration &bull; Backups Verified &bull; Built with Cloudflare &amp; Tailscale</p>
+    <p>Debian 12 Lean &amp; Safe Migration Playbook &bull; Preserved Databases &bull; Built with Snapper, Tailscale &amp; Docker</p>
   </div>
 </div>
 
@@ -589,7 +705,7 @@ function copyCode(btn) {
   navigator.clipboard.writeText(code).then(() => {
     const originalText = btn.innerText;
     btn.innerText = 'Copied!';
-    btn.style.color = '#34d399';
+    btn.style.color = '#3fb950';
     setTimeout(() => {
       btn.innerText = originalText;
       btn.style.color = '';
