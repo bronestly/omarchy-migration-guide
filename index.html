@@ -599,7 +599,8 @@ scp rene@100.81.195.25:~/Downloads/omarchy-migration-backup-LIGHT.tar.gz ~/
 tar -xzvf ~/omarchy-migration-backup-LIGHT.tar.gz
 
 # Sync project repos back:
-rsync -avhP rene@100.81.195.25:~/pop-full-backup/ ~/</code></pre>
+# You also have projects-repos-backup.tar.gz via Tailscale!
+tar -xzvf ~/projects-repos-backup.tar.gz -C ~/</code></pre>
     </div>
 
     <h3>3. Restore PostgreSQL Databases</h3>

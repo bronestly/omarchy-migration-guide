@@ -70,7 +70,7 @@ sudo tailscale up --ssh --operator=reen
 # Copy backup back from Mac
 scp rene@100.81.195.25:~/Downloads/omarchy-migration-backup-LIGHT.tar.gz ~/
 tar -xzvf ~/omarchy-migration-backup-LIGHT.tar.gz
-rsync -avhP rene@100.81.195.25:~/pop-full-backup/ ~/
+tar -xzvf ~/projects-repos-backup.tar.gz -C ~/
 
 # Restore Databases:
 # SparkyFitness
