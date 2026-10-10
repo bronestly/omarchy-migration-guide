@@ -636,6 +636,31 @@ docker exec -i opnform-db psql -U forge -d forge < ~/omarchy-migration-backup-*/
     </div>
   </div>
 
+    <!-- STEP 7.5: T3 CODE RESTORATION -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">7B</div>
+      <div class="step-title">Restore T3 Code Message History &amp; Workspace State</div>
+    </div>
+    <p>All your 38 threads, 985 chat messages, activities, secret keys, and attachments are safely backed up in <code>t3-full-history-backup.tar.gz</code>.</p>
+    
+    <div class="code-block">
+      <div class="code-header">
+        <span>bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code># 1. Install or launch T3 Code on Debian / connect via Mac
+# Stop the T3 service temporarily if running:
+pkill -f "service-launcher.mjs" || true
+
+# 2. Extract the complete T3 history backup directly to ~/.t3:
+scp rene@100.81.195.25:~/Downloads/t3-full-history-backup.tar.gz ~/
+tar -xzvf ~/t3-full-history-backup.tar.gz -C ~/
+
+# When you restart T3 Code, all previous conversations and turns will appear in the sidebar!</code></pre>
+    </div>
+  </div>
+
   <!-- STEP 7: RESTORE AGENT STATE & CLOUDFLARE -->
   <div class="step-card">
     <div class="step-header">

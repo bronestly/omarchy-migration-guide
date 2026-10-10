@@ -90,6 +90,13 @@ cd ~/OpnForm && docker compose up -d
 docker exec -i opnform-db psql -U forge -d forge < ~/omarchy-migration-backup-*/docker/opnform-db-dump.sql
 ```
 
+### 6B. Restore T3 Code Full Message History
+All 38 threads, 985 messages, and sessions are in `t3-full-history-backup.tar.gz` (11 MB):
+```bash
+# Extract to ~/.t3:
+tar -xzvf ~/t3-full-history-backup.tar.gz -C ~/
+```
+
 ### 6. Restore AI Agents & Keys
 ```bash
 cp -rp ~/omarchy-migration-backup-*/keys/.ssh ~/
